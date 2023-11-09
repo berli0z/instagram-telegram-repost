@@ -1,6 +1,9 @@
 # Instagram Telegram Repost
 A python script to backup an instagram page and keep it updated.
 
+## How it works
+After setting up the configuration, the first time you run the script on a single page it will download all its posts (expect videos) and then upload them to you channel. When you run it again on the same page, it will update the posts and only upload those. You can run the process in crontab.
+
 ## Installation
 1. Install requirements
 2. Edit the configuration file and rename it (see Configuration)
@@ -18,7 +21,6 @@ password = YOUR_INSTAGRAM_ACCOUNT_PASSWORD
 chat_id = TELEGRAM_CHAT_ID_OF_FORWARDING_CHANNEL/GROUP
 bot_token = TELGRAM_BOT_TOKEN
 ```
-
 
 ## Arguments
 Example usage: `python3 main.py -p instagram -u user -k 1234 -i -100123435345 -t bottoken:1512413525151521`
