@@ -6,27 +6,14 @@ import time
 from argparse import ArgumentParser
 from datetime import datetime
 from io import BytesIO
-# from config import *
 from os import listdir
 from os.path import isfile, join, exists
-
 import instaloader
 import requests
 from PIL import Image
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s', level=logging.DEBUG,
                     filename='logs.log')
-
-# working directory path fix if run from crontab
-logging.debug('Current working dir: ' + os.getcwd())
-if 'instagram-telegram-repost' not in os.getcwd():
-    logging.warning('Changing working directory to: ' + os.getcwd() + '/instagram-telegram-repost')
-    os.chdir(os.getcwd() + '/instagram-telegram-repost')
-    print(os.getcwd())
-    logging.warning('Working dir changed to: ' + os.getcwd())
-PATH = os.path.dirname(os.path.abspath(__file__))
-SESSION_FILE = os.path.join(PATH, 'session')
-PATH = os.path.join(PATH, PAGE)
 
 
 class Post:
@@ -178,6 +165,16 @@ def main():
 
 
 if __name__ == "__main__":
+
+    # working directory path fix if run from crontab
+    logging.debug('Current working dir: ' + os.getcwd())
+    if 'instagram-telegram-repost' not in os.getcwd():
+        logging.warning('Changing working directory to: ' + os.getcwd() + '/instagram-telegram-repost')
+        os.chdir(os.getcwd() + '/instagram-telegram-repost')
+        print(os.getcwd())
+        logging.warning('Working dir changed to: ' + os.getcwd())
+
+    # define arguments
     p = ArgumentParser()
     p.add_argument("-c", "--config_file", type=str, help='Config file')
     p.add_argument("-p", "--page")
@@ -186,7 +183,8 @@ if __name__ == "__main__":
     p.add_argument("-i", "--chat-id")
     p.add_argument("-t", "--bot-token")
     args = p.parse_args()
-    print(args)
+
+    # or load arguments from configuration
     if args.config_file:
         config = configparser.ConfigParser()
         config.read(args.config_file)
@@ -194,7 +192,8 @@ if __name__ == "__main__":
         defaults.update(dict(config.items("Defaults")))
         p.set_defaults(**defaults)
         args = p.parse_args()  # Overwrite arguments
-        print(args)
+
+    # check if arguments passed correctly
     try:
         PAGE = args.page
         USER = args.username
@@ -203,4 +202,9 @@ if __name__ == "__main__":
         TELEGRAM_TOKEN = args.bot_token
     except:
         raise SystemExit('Arguments missing, please open README.md')
+
+    # define path variable
+    PATH = os.path.dirname(os.path.abspath(__file__))
+    SESSION_FILE = os.path.join(PATH, 'session')
+    PATH = os.path.join(PATH, PAGE)
     main()
