@@ -8,12 +8,53 @@ from datetime import datetime
 from io import BytesIO
 from os import listdir
 from os.path import isfile, join, exists
+
 import instaloader
 import requests
 from PIL import Image
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s', level=logging.DEBUG,
                     filename='logs.log')
+
+# working directory path fix if run from crontab
+logging.debug('Current working dir: ' + os.getcwd())
+if 'instagram-telegram-repost' not in os.getcwd():
+    logging.warning('Changing working directory to: ' + os.getcwd() + '/instagram-telegram-repost')
+    os.chdir(os.getcwd() + '/instagram-telegram-repost')
+    print(os.getcwd())
+    logging.warning('Working dir changed to: ' + os.getcwd())
+
+# define arguments
+p = ArgumentParser()
+p.add_argument("-c", "--config_file", default='config.conf', type=str, help='Config file')
+p.add_argument("-p", "--page")
+p.add_argument("-u", "--username")
+p.add_argument("-k", "--password")
+p.add_argument("-i", "--chat-id")
+p.add_argument("-t", "--bot-token")
+args = p.parse_args()
+
+# or load arguments from configuration
+if args.config_file:
+    config = configparser.ConfigParser()
+    config.read(args.config_file)
+    defaults = {}
+    try:
+        defaults.update(dict(config.items("Defaults")))
+    except:
+        logging.warning('Cant find [Defaults] section: wrong config file path?')
+    p.set_defaults(**defaults)
+    args = p.parse_args()  # Overwrite arguments
+
+# check if arguments passed correctly
+try:
+    PAGE = args.page
+    USER = args.username
+    PASSWORD = args.password
+    CHAT_ID = args.chat_id
+    TELEGRAM_TOKEN = args.bot_token
+except:
+    raise SystemExit('Arguments missing, please open README.md')
 
 
 class Post:
@@ -34,7 +75,7 @@ class Post:
         return response
 
     def publish_in_telegram_mediagroup(self, token=TELEGRAM_TOKEN, chat_id=CHAT_ID):
-        SEND_MEDIA_GROUP = f'https://api.telegram.org/bot{token}/sendMediaGroup'
+        send_media_group = f'https://api.telegram.org/bot{token}/sendMediaGroup'
         files = {}
         media = []
         for i, img in enumerate(self.images):
@@ -46,7 +87,12 @@ class Post:
                 files[name] = output.read()
                 media.append(dict(type='photo', media=f'attach://{name}'))
         media[0]['caption'] = self.caption
-        return requests.post(SEND_MEDIA_GROUP, data={'chat_id': chat_id, 'media': json.dumps(media)}, files=files)
+        response = requests.post(send_media_group, data={
+            'chat_id': chat_id,
+            'media': json.dumps(media)},
+                                 files=files).json()
+        time.sleep(10)
+        return response
 
 
 def download_all_posts():
@@ -165,46 +211,11 @@ def main():
 
 
 if __name__ == "__main__":
-
-    # working directory path fix if run from crontab
-    logging.debug('Current working dir: ' + os.getcwd())
-    if 'instagram-telegram-repost' not in os.getcwd():
-        logging.warning('Changing working directory to: ' + os.getcwd() + '/instagram-telegram-repost')
-        os.chdir(os.getcwd() + '/instagram-telegram-repost')
-        print(os.getcwd())
-        logging.warning('Working dir changed to: ' + os.getcwd())
-
-    # define arguments
-    p = ArgumentParser()
-    p.add_argument("-c", "--config_file", type=str, help='Config file')
-    p.add_argument("-p", "--page")
-    p.add_argument("-u", "--username")
-    p.add_argument("-k", "--password")
-    p.add_argument("-i", "--chat-id")
-    p.add_argument("-t", "--bot-token")
-    args = p.parse_args()
-
-    # or load arguments from configuration
-    if args.config_file:
-        config = configparser.ConfigParser()
-        config.read(args.config_file)
-        defaults = {}
-        defaults.update(dict(config.items("Defaults")))
-        p.set_defaults(**defaults)
-        args = p.parse_args()  # Overwrite arguments
-
-    # check if arguments passed correctly
-    try:
-        PAGE = args.page
-        USER = args.username
-        PASSWORD = args.password
-        CHAT_ID = args.chat_id
-        TELEGRAM_TOKEN = args.bot_token
-    except:
-        raise SystemExit('Arguments missing, please open README.md')
-
     # define path variable
     PATH = os.path.dirname(os.path.abspath(__file__))
     SESSION_FILE = os.path.join(PATH, 'session')
-    PATH = os.path.join(PATH, PAGE)
-    main()
+    try:
+        PATH = os.path.join(PATH, PAGE)
+        main()
+    except:
+        logging.warning('Error, configuration file wrong?')
