@@ -97,7 +97,10 @@ class Post:
 
 def download_all_posts():
     L = instaloader.Instaloader(compress_json=False, sanitize_paths=True)
-    L.load_session_from_file(USER, SESSION_FILE)
+    try:
+        L.load_session_from_file(USER, SESSION_FILE)
+    except:
+        L.login(USER, PASSWORD)  # (login)
     posts = instaloader.Profile.from_username(L.context, PAGE).get_posts()
     for post in posts:
         # print(post.date)
@@ -116,9 +119,9 @@ def download_latest_posts():
     # get posts feed
     L = instaloader.Instaloader(compress_json=False, sanitize_paths=True)
     try:
-        L.login(USER, PASSWORD)  # (login)
-    except:
         L.load_session_from_file(USER, SESSION_FILE)
+    except:
+        L.login(USER, PASSWORD)  # (login)
     posts = instaloader.Profile.from_username(L.context, PAGE).get_posts()
     # download new posts
     k = 0  # initiate k
@@ -216,6 +219,6 @@ if __name__ == "__main__":
     SESSION_FILE = os.path.join(PATH, 'session')
     try:
         PATH = os.path.join(PATH, PAGE)
-        main()
     except:
         logging.warning('Error, configuration file wrong?')
+    main()
