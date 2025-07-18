@@ -7,3 +7,7 @@
 /config.conf
 /logs.log
 /private.md
+main_original.py
+README_original.md
+__pycache__/
+*.pyc
