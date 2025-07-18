@@ -1,46 +1,129 @@
 # Instagram Telegram Repost
-A python script to backup an instagram page as a telegram channel and keep it updated.
+
+A robust, modular Python application to backup Instagram pages as Telegram channels and keep them updated automatically.
+
+## Key Features
+
+- **Reliable**: Improved error handling and crash prevention
+- **Modular**: Clean separation of concerns with dedicated modules for configuration, Instagram downloading, and Telegram uploading
+- **Long-running**: Better session management and rate limiting for sustained operation
+- **Configurable**: Flexible configuration via command line arguments or config files
 
 ## How it works
-After setting up the configuration, the first time you run the script on a single page it will download all its posts (expect videos) and then upload them to you channel. When you run it again on the same page, it will update the posts and only upload those. You will need an instagram account, a telegram channel and a telegram bot of your own (see below for more details). You can run the process in crontab, but you will get logged out often if your VPS is hosted and/or your account is relatively new.
+
+The application downloads Instagram posts (excluding videos) from a specified page and uploads them to your Telegram channel. On first run, it downloads all posts. Subsequent runs only download and upload new posts, making it efficient for regular updates.
 
 ## Installation
-0. git clone this repository: `git clone https://github.com/berli0z/instagram-telegram-repost.git`
-1. Install requirements.txt `python3 -m pip install -r requirements.txt`
-2. Edit the configuration file and rename it (see [Configuration](#configuration)) `nano sample_config.conf`, and saves as `config.conf`
-3. Run with `python3 main.py -c config.conf` or use arguments (see [Arguments](#arguments))
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/berli0z/instagram-telegram-repost.git
+   cd instagram-telegram-repost
+   ```
+
+2. Install requirements:
+   ```bash
+   python3 -m pip install -r requirements.txt
+   ```
+
+3. Configure the application (see [Configuration](#configuration))
+
+4. Run the application:
+   ```bash
+   python3 main.py -c config.conf
+   ```
 
 ## Configuration
-- Edit the variables in sample_config.conf and save as config.conf in instagram-telegram-repost folder.
-- In order to get a **bot token**, please follow this [guide](https://archive.is/p7SsD). 
-- To get a **chat id**, you can use this [telegram bot](https://t.me/username_to_id_bot) instead.
-```
-[Defaults]
-page = INSTAGRAM_PAGE_HANDLE_YOU_WANT_TO_FORWARD
-username = YOUR_INSTAGRAM_ACCOUNT_USERNAME
-password = YOUR_INSTAGRAM_ACCOUNT_PASSWORD
-chat_id = TELEGRAM_CHAT_ID_OF_FORWARDING_CHANNEL/GROUP
-bot_token = TELGRAM_BOT_TOKEN
+
+### Method 1: Configuration File
+
+1. Copy the sample configuration file:
+   ```bash
+   cp sample_config.conf config.conf
+   ```
+
+2. Edit `config.conf` with your details:
+   ```ini
+   [Defaults]
+   page = INSTAGRAM_PAGE_HANDLE
+   username = YOUR_INSTAGRAM_USERNAME
+   password = YOUR_INSTAGRAM_PASSWORD
+   chat-id = TELEGRAM_CHAT_ID
+   bot-token = TELEGRAM_BOT_TOKEN
+   ```
+
+### Method 2: Command Line Arguments
+
+```bash
+python3 main.py -p instagram_page -u username -k password -i chat_id -t bot_token
 ```
 
-## Arguments
-Example usage: `python3 main.py -p instagram -u user -k 1234 -i -100123435345 -t bottoken:1512413525151521`
+### Getting Required Information
+
+- **Bot Token**: Follow [this guide](https://archive.is/p7SsD) to create a Telegram bot
+- **Chat ID**: Use [@username_to_id_bot](https://t.me/username_to_id_bot) to get your channel's chat ID
+
+## Command Line Options
 
 ```
--p; --page: the name of the instagram handle to forward
--u; --username: your own instagram username
--k; --password: your instagram account password
--i; --chat-id: the chat-id of the telegram channel/group you want to forward to
--t; --token: the telegram bot token
--c; --config: a configuration file based on sample_config.conf
+-c, --config_file    Configuration file (default: config.conf)
+-p, --page          Instagram page handle
+-u, --username      Your Instagram username
+-k, --password      Your Instagram password  
+-i, --chat-id       Telegram chat ID
+-t, --bot-token     Telegram bot token
 ```
+
+## Architecture
+
+The application is built with a modular architecture:
+
+- **`config_handler.py`**: Handles configuration loading and validation
+- **`instagram_downloader.py`**: Manages Instagram authentication and post downloading
+- **`telegram_uploader.py`**: Handles Telegram API interactions and media uploads
+- **`main.py`**: Main application orchestrator
+
+This modular design makes the application:
+- Easier to maintain and extend
+- More testable
+- Better at handling errors
+- Simpler to debug
+
 ## Troubleshooting
-If you are logged out or cannot run the script from a VPS, consider using `get
-_cookie.py` to get a cookie either locally or to get it from your local computer and use it on the VPS.
 
-## FAQ
-- I have a problem, how do I solve it?
-- Please, open an issue with your details and I will try to fix it. Thank you.
+### Login Issues
 
-## TL;DR
-`python3 main.py -p page -u username -k password -i chat_id -t bot_token`
+If you experience login issues or get logged out frequently (common with VPS hosting), use the `get_cookie.py` utility:
+
+```bash
+python3 get_cookie.py
+```
+
+This extracts Instagram cookies from your local Firefox browser for use on remote servers.
+
+### Common Issues
+
+- **First run crashes**: Fixed in this version with proper error handling
+- **Rate limiting**: The application includes built-in delays to respect API limits
+- **Session management**: Improved session handling for better reliability
+
+## Running Automatically
+
+For automated operation, add to your crontab:
+
+```bash
+# Run every hour
+0 * * * * cd /path/to/instagram-telegram-repost && python3 main.py -c config.conf
+```
+
+The application handles working directory changes automatically for crontab compatibility.
+
+## Logging
+
+The application creates detailed logs in `logs.log` for troubleshooting and monitoring. Logs include both file output and console output for better visibility.
+
+## Quick Start
+
+```bash
+python3 main.py -p page -u username -k password -i chat_id -t bot_token
+```
